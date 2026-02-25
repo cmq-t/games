@@ -1,13 +1,13 @@
 Implementation of Snake
 -
-This was done as a starting excecise to get used to raylib and learn some good practices, as well as identify some bad ones for future refernce (e.g. the death screen implementation)
+This was done as a starting excecise to get used to raylib and learn some good practices, as well as identify some bad ones for future refernce (e.g. the death screen implementation, which will not be redone).
 
 TODOS:
 -
   - apple image ✅
   - apple eat sound
-  - smooth snake movement
-  - fps
+  - smooth snake movement ❌ (does not work due to the way the snake is made)
+  - fps ✅
   - restart ✅
 
 Build Requirements:

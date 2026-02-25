@@ -2,10 +2,12 @@
 #include <iostream>
 #include <cstring>
 #include <time.h>
+#include <cmath>
 #define GREY          CLITERAL(Color){0x6F, 0x6F, 0x6F, 0x6F}
 #define GRID_SIZE           20
 #define HEIGHT_OFFSET       45
-#define TARGET_FPS          144
+#define TARGET_FPS          15
+#define GRIDS_PER_SEC       3
 
 #define DEFAULT_SNAKE_LEN   3
 
@@ -323,6 +325,8 @@ int main()
     GameState *game = new GameState(apple_texture);
     int key = 0;
     bool quit_game = false;
+    bool snake_should_move = true;
+    float timer;
 
     while (!WindowShouldClose()) {
         // get input (and display it on stdout)
@@ -351,34 +355,38 @@ int main()
         }
 
         // on death
-        if (game->move_snake() != 0) {
-            BeginDrawing();
-            ClearBackground(RED);
-            EndDrawing();
-            WaitTime(1);
-            while (key != KEY_SPACE) {
+        if (snake_should_move == true) {
+            if (game->move_snake() != 0) {
                 BeginDrawing();
                 ClearBackground(RED);
+                EndDrawing();
+                WaitTime(1);
+                while (key != KEY_SPACE) {
+                    BeginDrawing();
+                    ClearBackground(RED);
 
-                DrawText("You died!", (width - MeasureText("You died!", 100)) / 2, height / 2 - 60, 100, RAYWHITE);
-                DrawText("Press SPACE to restart", (width - MeasureText("Press SPACE to restart", 50)) / 2, height / 2 + 40, 50, RAYWHITE);
-                DrawText("Or ESC to quit", (width - MeasureText("Or ESC to quit", 30)) / 2, height / 2 + 100, 30, RAYWHITE);
+                    DrawText("You died!", (width - MeasureText("You died!", 100)) / 2, height / 2 - 60, 100, RAYWHITE);
+                    DrawText("Press SPACE to restart", (width - MeasureText("Press SPACE to restart", 50)) / 2, height / 2 + 40, 50, RAYWHITE);
+                    DrawText("Or ESC to quit", (width - MeasureText("Or ESC to quit", 30)) / 2, height / 2 + 100, 30, RAYWHITE);
 
-                key = GetKeyPressed();
-                if (key == KEY_ESCAPE) {
-                    quit_game = true;
+                    key = GetKeyPressed();
+                    if (key == KEY_ESCAPE) {
+                        quit_game = true;
+                        break;
+                    }
+                    EndDrawing();
+                }
+                if (quit_game != true) {
+                    // destroy game
+                    // generate new game
+                    game->~GameState();
+                    game = new GameState(apple_texture);
+                } else {
                     break;
                 }
-                EndDrawing();
             }
-            if (quit_game != true) {
-                // destroy game
-                // generate new game
-                game->~GameState();
-                game = new GameState(apple_texture);
-            } else {
-                break;
-            }
+            snake_should_move = false;
+            timer = 0;
         }
 
         BeginDrawing();
@@ -386,12 +394,18 @@ int main()
         ClearBackground(DARKBROWN);
         game->draw_grid();
         game->draw_snake();
+        timer += GRIDS_PER_SEC * rect_width * GetFrameTime();
+        if (trunc(timer / rect_width) == 1) {
+            snake_should_move = true;
+            timer = 0;
+        }
         game->draw_apples();
 
         DrawText(TextFormat("Apples Eaten: %03i", game->get_apples_eaten()), 6, 2, HEIGHT_OFFSET - 4, RAYWHITE);
         if (game->get_apples_eaten() == 10) {
             DrawText("Hmm... Looks like you're pretty hungry!", 6, 2 + rect_width, HEIGHT_OFFSET - 4, RAYWHITE);
         }
+        DrawFPS(5, 5 + HEIGHT_OFFSET);
 
         EndDrawing();
     }
