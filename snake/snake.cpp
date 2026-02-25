@@ -7,7 +7,7 @@
 #define GREY          CLITERAL(Color){0x6F, 0x6F, 0x6F, 0x6F}
 #define GRID_SIZE           20
 #define HEIGHT_OFFSET       45
-#define TARGET_FPS          15
+#define TARGET_FPS          60
 #define GRIDS_PER_SEC       3
 
 #define DEFAULT_SNAKE_LEN   3
@@ -41,11 +41,12 @@ class GameState {
     int snake_length = DEFAULT_SNAKE_LEN;
     int apples_eaten = 0;
     Texture2D apple_texture;
+    Sound apple_munch;
 
     public:
-
     queue<int> input_queue;
-    GameState(Texture2D apple_texture) {
+
+    GameState(Texture2D apple_texture, Sound apple_munch) {
         for (int x = 0; x < GRID_SIZE; x++) {
             for (int y = 0; y < GRID_SIZE; y++) {
                 grid_data[x][y] = 0;
@@ -58,6 +59,7 @@ class GameState {
         }
         snake_drawing = (Rectangle) {0, 0, (float) rect_width - 1, (float) rect_height - 1};
         this->apple_texture = apple_texture;
+        this->apple_munch = apple_munch;
 
         // snake spawn position
 
@@ -251,6 +253,7 @@ class GameState {
                 }
             }
             if (ate_apple == true) {
+                PlaySound(this->apple_munch);
                 apples_eaten += 1;
                 snake_length += 1;
             }
@@ -331,12 +334,15 @@ class GameState {
 int main()
 {
     InitWindow(width, height + HEIGHT_OFFSET, "Snake");
+    InitAudioDevice();
     SetTargetFPS(TARGET_FPS);
     SetRandomSeed(time(NULL));
 
     Texture2D apple_texture = LoadTexture("images/apple.png");
+    // TODO: convert to wav
+    Sound apple_munch = LoadSound("sounds/aplple_munch.mp3");
 
-    GameState *game = new GameState(apple_texture);
+    GameState *game = new GameState(apple_texture, apple_munch);
     int key = 0;
     bool quit_game = false;
     bool snake_should_move = true;
@@ -355,19 +361,18 @@ int main()
                 game->input_queue.pop();
             }
         }
-        if (IsKeyDown(KEY_W)) {
+        if (key == KEY_W) {
             game->input_queue.push(DIR_UP);
         }
-        if (IsKeyDown(KEY_A)) {
+        if (key == KEY_A) {
             game->input_queue.push(DIR_LEFT);
         }
-        if (IsKeyDown(KEY_S)) {
+        if (key == KEY_S) {
             game->input_queue.push(DIR_DOWN);
         }
-        if (IsKeyDown(KEY_D)) {
+        if (key == KEY_D) {
             game->input_queue.push(DIR_RIGHT);
         }
-
 
         // on death
         if (snake_should_move == true) {
@@ -395,7 +400,7 @@ int main()
                     // destroy game
                     // generate new game
                     game->~GameState();
-                    game = new GameState(apple_texture);
+                    game = new GameState(apple_texture, apple_munch);
                 } else {
                     break;
                 }
@@ -426,6 +431,8 @@ int main()
     }
 
     UnloadTexture(apple_texture);
+    UnloadSound(apple_munch);
 
+    CloseAudioDevice();
     CloseWindow();
 }
