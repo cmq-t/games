@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <iostream>
 #include <cstring>
+#include <queue>
 #include <time.h>
 #include <cmath>
 #define GREY          CLITERAL(Color){0x6F, 0x6F, 0x6F, 0x6F}
@@ -42,6 +43,8 @@ class GameState {
     Texture2D apple_texture;
 
     public:
+
+    queue<int> input_queue;
     GameState(Texture2D apple_texture) {
         for (int x = 0; x < GRID_SIZE; x++) {
             for (int y = 0; y < GRID_SIZE; y++) {
@@ -149,6 +152,17 @@ class GameState {
         // don't endlessly find the piece you move
         bool found_snake_piece = false;
         bool ate_apple = false;
+        int previous_direction;
+        // use input queue
+        while (!input_queue.empty()) {
+            previous_direction = direction;
+            change_direction(input_queue.front());
+            input_queue.pop();
+            if (direction != previous_direction) {
+                break;
+            }
+        }
+
         if (direction != DIR_STOP) {
             for (int x = 0; x < GRID_SIZE; x++) {
                 for (int y = 0; y < GRID_SIZE; y++) {
@@ -335,24 +349,25 @@ int main()
             cout << key << endl;
         }
 
-        // send input for direction change
-        switch (key) {
-            case KEY_W:
-                game->change_direction(DIR_UP);
-                break;
-            case KEY_A:
-                game->change_direction(DIR_LEFT);
-                break;
-            case KEY_S:
-                game->change_direction(DIR_DOWN);
-                break;
-            case KEY_D:
-                game->change_direction(DIR_RIGHT);
-                break;
-            case KEY_SPACE:
-                game->change_direction(DIR_STOP);
-                break;
+        if (IsKeyDown(KEY_SPACE)) {
+            game->change_direction(DIR_STOP);
+            while (!game->input_queue.empty()) {
+                game->input_queue.pop();
+            }
         }
+        if (IsKeyDown(KEY_W)) {
+            game->input_queue.push(DIR_UP);
+        }
+        if (IsKeyDown(KEY_A)) {
+            game->input_queue.push(DIR_LEFT);
+        }
+        if (IsKeyDown(KEY_S)) {
+            game->input_queue.push(DIR_DOWN);
+        }
+        if (IsKeyDown(KEY_D)) {
+            game->input_queue.push(DIR_RIGHT);
+        }
+
 
         // on death
         if (snake_should_move == true) {
